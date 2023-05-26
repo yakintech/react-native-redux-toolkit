@@ -3,21 +3,41 @@ import axios from 'axios'
 
 export const getAllOrders = createAsyncThunk(
     'orders/getAll',
-    async () => {
-        let res = await axios.get('https://northwind.vercel.app/api/orders');
-        return res.data
+    async (data, { rejectWithValue }) => {
+        try {
+            let res = await axios.get('https://northwind.vercel.app/api/orders');
+            return res.data
+        } catch (error) {
+            return rejectWithValue("Uygulamada hata meydana geldi!!");
+        }
+    }
+)
+
+export const deleteOrderById = createAsyncThunk(
+    'orders/deleteOrderById',
+    async (item: any, { rejectWithValue }) => {        
+        try {
+            await axios.delete(`https://northwind.vercel.app/api/orders/${item?.id}`)
+            return item
+        } catch (error) {
+            
+            return rejectWithValue("Uygulamada hata meydana geldi!!");
+        }
+
     }
 )
 
 
 interface OrdersState {
     data: [],
-    loading: boolean
+    loading: boolean,
+    error:string
 }
 
 const initialState: OrdersState = {
     data: [],
-    loading: true
+    loading: true,
+    error:''
 }
 
 
@@ -30,6 +50,8 @@ const orderSlice = createSlice({
         }
     },
     extraReducers: (builder) => {
+
+        //get All Orders cases
         builder.addCase(getAllOrders.pending, (state, action) => {
             state.data = [];
             state.loading = true
@@ -40,9 +62,27 @@ const orderSlice = createSlice({
             state.loading = false
         })
 
-        builder.addCase(getAllOrders.rejected, (state, action) => {
+        builder.addCase(getAllOrders.rejected, (state, action : any) => {
             state.data = [];
             state.loading = false
+            state.error = action.payload     
+        })
+
+        builder.addCase(deleteOrderById.pending, (state, action) => {
+            state.loading = true
+        })
+
+
+        //deleteOrderById cases
+        builder.addCase(deleteOrderById.fulfilled, (state: any, { payload }) => {
+            state.loading = false;
+            state.data = state.data.filter((q: any) => q.id != payload.id)
+        })
+
+        builder.addCase(deleteOrderById.rejected, (state, action: any) => {
+            state.loading = false
+            // state.error = action.payload.toString()
+
         })
     }
 })
